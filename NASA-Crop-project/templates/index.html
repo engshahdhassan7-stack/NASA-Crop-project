@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>منصة التوصيات الزراعية - NASA Space Apps</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; background: #f4f7f6; padding: 30px; }
+        .container { max-width: 650px; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #2c3e50; text-align: center; }
+        label { font-weight: bold; display: block; margin-top: 15px; color: #34495e; }
+        select, button { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background: #16a085; color: white; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 20px; border: none; }
+        button:hover { background: #138d75; }
+        .result-box { background: #e8f8f5; padding: 15px; margin-top: 20px; border-radius: 5px; border-right: 5px solid #1abc9c; }
+        .crop-item { margin-bottom: 15px; border-bottom: 1px dashed #bdc3c7; padding-bottom: 10px; }
+        .nasa-badge { background: #2980b9; color: white; padding: 5px 10px; border-radius: 4px; font-size: 13px; display: inline-block; margin-bottom: 10px; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🌱 نظام توصية المحاصيل الذكي</h2>
+        <p style="text-align: center; color: #7f8c8d;">مدعوم ببيانات الأقمار الصناعية (NASA Space Apps Challenge)</p>
+        
+        <label>اختر المحافظة:</label>
+        <select id="region">
+            <option value="سوهاج">سوهاج</option>
+            <option value="أسوان">أسوان</option>
+            <option value="الأسكندرية">الأسكندرية</option>
+            <option value="الشرقية">الشرقية</option>
+        </select>
+
+        <button onclick="getRecommendations()">جلب بيانات ناسا وتحليل المحاصيل</button>
+
+        <div id="output"></div>
+    </div>
+
+    <script>
+        async function getRecommendations() {
+            const region = document.getElementById('region').value;
+            document.getElementById('output').innerHTML = '<p style="text-align:center; color: #e67e22; margin-top:15px;">جاري الاتصال بـ NASA API وسحب بيانات المناخ للأقمار الصناعية...</p>';
+
+            try {
+                const response = await fetch('/api/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ region })
+                });
+
+                const data = await response.json();
+                let html = `
+                    <div class="result-box">
+                        <span class="nasa-badge">درجة الحرارة من ناسا: ${data.nasa_temp} °م</span>
+                        <span class="nasa-badge" style="background: #27ae60;">نوع التربة: ${data.soil_type}</span>
+                        <h3>النتائج المقترحة لمنطقة (${data.region}):</h3>
+                `;
+                
+                data.recommended_crops.forEach(item => {
+                    html += `
+                        <div class="crop-item">
+                            <b>🌾 المحصول: ${item.crop_name}</b><br>
+                            - <b>خطة التناوب:</b> ${item.rotation_plan.join(' ➔ ')}<br>
+                            - <i>السبب العلمي:</i> ${item.explanation}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                document.getElementById('output').innerHTML = html;
+            } catch (error) {
+                document.getElementById('output').innerHTML = '<p style="color: red; text-align: center;">حدث خطأ أثناء الاتصال بالخادم.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
